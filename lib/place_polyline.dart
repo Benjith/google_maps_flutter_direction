@@ -16,6 +16,8 @@ class PlacePolylineBody extends StatefulWidget {
 class PlacePolylineBodyState extends State<PlacePolylineBody> {
   PlacePolylineBodyState();
 
+  String _directions = '';
+
   GoogleMapController controller;
   int _polylineCount = 0;
   Polyline _selectedPolyline;
@@ -78,90 +80,6 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
     });
   }
 
-  void _updateSelectedPolyline(PolylineOptions changes) {
-    controller.updatePolyline(_selectedPolyline, changes);
-  }
-
-  void _add() {
-    controller.addPolyline(PolylineOptions(
-      consumeTapEvents: true,
-      points: _createPoints(),
-    ));
-    setState(() {
-      _polylineCount += 1;
-    });
-  }
-
-  void _remove() {
-    controller.removePolyline(_selectedPolyline);
-    setState(() {
-      _selectedPolyline = null;
-      _polylineCount -= 1;
-    });
-  }
-
-  Future<void> _toggleGeodesic() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        geodesic: !_selectedPolyline.options.geodesic,
-      ),
-    );
-  }
-
-  Future<void> _toggleVisible() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        visible: !_selectedPolyline.options.visible,
-      ),
-    );
-  }
-
-  Future<void> _changeColor() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        color: colors[++colorsIndex % colors.length],
-      ),
-    );
-  }
-
-  Future<void> _changeWidth() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        width: widths[++widthsIndex % widths.length],
-      ),
-    );
-  }
-
-  Future<void> _changeJointType() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        jointType: jointTypes[++jointTypesIndex % jointTypes.length],
-      ),
-    );
-  }
-
-  Future<void> _changeEndCap() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        endCap: endCaps[++endCapsIndex % endCaps.length],
-      ),
-    );
-  }
-
-  Future<void> _changeStartCap() async {
-    _updateSelectedPolyline(
-      PolylineOptions(
-        startCap: startCaps[++startCapsIndex % startCaps.length],
-      ),
-    );
-  }
-
-  Future<void> _changePattern() async {
-    _updateSelectedPolyline(
-      PolylineOptions(pattern: patterns[++patternsIndex % patterns.length]),
-    );
-  }
-
   TextEditingController _origin = TextEditingController();
   TextEditingController _destination = TextEditingController();
 
@@ -178,38 +96,48 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
           var response = await client.get(url);
           if (response.statusCode == 200) {
             var data = jsonDecode(response.body);
+            if (data['status'] == 'OK') {
+              double lat = data['routes'][0]['legs'][0]['end_location']['lat'];
+              double lng = data['routes'][0]['legs'][0]['end_location']['lng'];
 
-            double lat = data['routes'][0]['legs'][0]['end_location']['lat'];
-            double lng = data['routes'][0]['legs'][0]['end_location']['lng'];
+              final LatLng _center = LatLng(lat, lng);
+              //moving camera
+              controller.animateCamera(CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  bearing: 270.0,
+                  target: _center,
+                  tilt: 30.0,
+                  zoom: 17.0,
+                ),
+              ));
+              // add polylines
+              final List<LatLng> _points = <LatLng>[];
 
-            final LatLng _center = LatLng(lat, lng);
-            //moving camera
-            controller.animateCamera(CameraUpdate.newCameraPosition(
-              CameraPosition(
-                bearing: 270.0,
-                target: _center,
-                tilt: 30.0,
-                zoom: 17.0,
-              ),
-            ));
-            // add polylines
-            final List<LatLng> _points = <LatLng>[];
-
-            print(data['routes'][0]['legs'][0]['steps'][0]['end_location']);
-            for (var i = 0;
-                i < data['routes'][0]['legs'][0]['steps'].length;
-                i++) {
-              _points.add(_createLatLng(
-                  data['routes'][0]['legs'][0]['steps'][i]['end_location']
-                      ['lat'],
-                  data['routes'][0]['legs'][0]['steps'][i]['end_location']
-                      ['lng']));
+              print(data['routes'][0]['legs'][0]['steps'][0]['end_location']);
+              for (var i = 0;
+                  i < data['routes'][0]['legs'][0]['steps'].length;
+                  i++) {
+                _points.add(_createLatLng(
+                    data['routes'][0]['legs'][0]['steps'][i]['end_location']
+                        ['lat'],
+                    data['routes'][0]['legs'][0]['steps'][i]['end_location']
+                        ['lng']));
+                        _directions +=data['routes'][0]['legs'][0]['steps'][i]['html_instructions'];
+                        _directions+='\n';
+              }
+              controller.addPolyline(PolylineOptions(
+                consumeTapEvents: true,
+                points: _points,
+                color: 0xFFF44336,
+                jointType: JointType.round,
+                geodesic: true,
+              ));
+              _origin.clear();
+              _destination.clear();
+              setState(() {
+                
+              });
             }
-            controller.addPolyline(PolylineOptions(
-              consumeTapEvents: true,
-              points: _points,
-              color:0xFFF44336
-            ));
           }
         } finally {
           client.close();
@@ -257,94 +185,14 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
                 RaisedButton(
                   onPressed: fetchAPI,
                   child: Text('Direction'),
-                )
+                ),
+                Text(_directions),
               ],
             ),
-            // child: Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            //   children: <Widget>[
-            //     Row(
-            //       children: <Widget>[
-            //         Column(
-            //           children: <Widget>[
-            //             FlatButton(
-            //               child: const Text('add'),
-            //               onPressed: (_polylineCount == 1) ? null : _add,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('remove'),
-            //               onPressed:
-            //                   (_selectedPolyline == null) ? null : _remove,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('toggle visible'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _toggleVisible,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('toggle geodesic'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _toggleGeodesic,
-            //             ),
-            //           ],
-            //         ),
-            //         Column(
-            //           children: <Widget>[
-            //             FlatButton(
-            //               child: const Text('change width'),
-            //               onPressed:
-            //                   (_selectedPolyline == null) ? null : _changeWidth,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('change start cap'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _changeStartCap,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('change end cap'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _changeEndCap,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('change joint type'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _changeJointType,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('change color'),
-            //               onPressed:
-            //                   (_selectedPolyline == null) ? null : _changeColor,
-            //             ),
-            //             FlatButton(
-            //               child: const Text('change pattern'),
-            //               onPressed: (_selectedPolyline == null)
-            //                   ? null
-            //                   : _changePattern,
-            //             ),
-            //           ],
-            //         ),
-            //       ],
-            //     )
-            //   ],
-            // ),
           ),
         ),
       ],
     );
-  }
-
-  List<LatLng> _createPoints() {
-    final List<LatLng> points = <LatLng>[];
-    points.add(_createLatLng(51.4816, -3.1791));
-    points.add(_createLatLng(53.0430, -2.9925));
-    points.add(_createLatLng(53.1396, -4.2739));
-    points.add(_createLatLng(52.4153, -4.0829));
-    return points;
   }
 
   LatLng _createLatLng(double lat, double lng) {
