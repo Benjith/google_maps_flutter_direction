@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:zamask/app_data.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:zamask/custom_places_search.dart';
 
 class PlacePolylineBody extends StatefulWidget {
   const PlacePolylineBody();
@@ -123,8 +124,9 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
                         ['lat'],
                     data['routes'][0]['legs'][0]['steps'][i]['end_location']
                         ['lng']));
-                        _directions +=data['routes'][0]['legs'][0]['steps'][i]['html_instructions'];
-                        _directions+='\n';
+                _directions += data['routes'][0]['legs'][0]['steps'][i]
+                    ['html_instructions'];
+                _directions += '\n';
               }
               controller.addPolyline(PolylineOptions(
                 consumeTapEvents: true,
@@ -135,9 +137,7 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
               ));
               _origin.clear();
               _destination.clear();
-              setState(() {
-                
-              });
+              setState(() {});
             }
           }
         } finally {
@@ -173,6 +173,18 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
             child: Column(
               children: <Widget>[
                 TextField(
+                  onTap: () async {
+                    var result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CustomSearchScaffold()));
+
+                    if (result != null) {
+                      setState(() {
+                        _destination.text = result.toString();
+                      });
+                    }
+                  },
                   decoration: InputDecoration(hintText: '  Origin'),
                   controller: _origin,
                 ),
@@ -180,6 +192,17 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
                   height: 5,
                 ),
                 TextField(
+                  onTap: () async {
+                    var result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CustomSearchScaffold()));
+                    if (result != null) {
+                      setState(() {
+                        _destination.text = result.toString();
+                      });
+                    }
+                  },
                   decoration: InputDecoration(hintText: '  Destination'),
                   controller: _destination,
                 ),
@@ -187,10 +210,10 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
                   onPressed: fetchAPI,
                   child: Text('Direction'),
                 ),
-                if(_directions != '')
-                Html(
-                  data: _directions,
-                )
+                if (_directions != '')
+                  Html(
+                    data: _directions,
+                  )
                 // Text(_directions),
               ],
             ),
