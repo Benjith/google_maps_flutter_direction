@@ -181,7 +181,7 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
 
                     if (result != null) {
                       setState(() {
-                        _destination.text = result.toString();
+                        _origin.text = result.toString();
                       });
                     }
                   },
