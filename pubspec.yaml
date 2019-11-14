@@ -14,9 +14,9 @@ description: A new Flutter project.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.2 <3.0.0"
 
-dependencies:
+dependencies:                                                                                                                                          
   flutter:
     sdk: flutter
 
@@ -25,6 +25,9 @@ dependencies:
   cupertino_icons: ^0.1.2
   http: ^0.12.0+2
   flutter_google_places: ^0.2.3
+  flutter_html: ^0.11.0 
+  geocoder: ^0.2.1
+  google_maps_webservice: ^0.0.16
   google_maps_flutter:
     git:
       url: git://github.com/irevans/plugins/

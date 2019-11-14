@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:zamask/app_data.dart';
 
@@ -160,8 +161,8 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
               onMapCreated: _onMapCreated,
               options: GoogleMapOptions(
                 cameraPosition: const CameraPosition(
-                  target: LatLng(52.4478, -3.5402),
-                  zoom: 7.0,
+                  target: LatLng(20.0082678, 64.4103554),
+                  zoom: 4.0,
                 ),
               ),
             ),
@@ -186,7 +187,11 @@ class PlacePolylineBodyState extends State<PlacePolylineBody> {
                   onPressed: fetchAPI,
                   child: Text('Direction'),
                 ),
-                Text(_directions),
+                if(_directions != '')
+                Html(
+                  data: _directions,
+                )
+                // Text(_directions),
               ],
             ),
           ),
